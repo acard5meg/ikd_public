@@ -1,0 +1,50 @@
+compile: False
+task: fkd
+# GETS THE MODEL DICTIONARY FROM THE TRANSOFRMER YAML FILE 
+tverti: ${from_yaml:verti-wheeler_pipeline/Tverti-wheeler/vertiencoder/conf/transformer.yaml, model}
+
+# ATC EDITS
+# tverti_weight: /home/aniket/Token_prediction/Deployment/Tverti-wheeler/vertiencoder/checkpoint/last_hopes/only_ctx/dt14-tal32-fkd-PL1-finetuned-09-13-21-46-E50.tar
+tverti_weight: verti-wheeler_pipeline/Tverti-wheeler/vertiencoder/checkpoint/last_hopes/only_ctx/dt14-tal32-fkd-PL1-finetuned-09-13-21-46-E50.tar
+
+# ATC EDITS - ANIKET SAID TO REMOVE THE BC, IKD, SWAE MODELS
+# bc: ${from_yaml:Tverti-wheeler/vertiencoder/conf/bc_model.yaml, model}
+# bc: ${from_yaml:verti-wheeler_pipeline/Tverti-wheeler/vertiencoder/conf/bc_model.yaml, model}
+
+# ALREADY COMMENTED OUT
+# bc_weight: Tverti-wheeler/vertiencoder/checkpoint/dt-bc-finetuned/dt-best.tar
+
+
+# NEED FROM ANIKET - ANIKET SAID TO REMOVE
+# bc_weight: Tverti-wheeler/vertiencoder/checkpoint/dt-bc-frozen/dt-best.tar
+# ATC EDITS
+# bc_weight: verti-wheeler_pipeline/Tverti-wheeler/vertiencoder/checkpoint/dt-bc-frozen/dt-best.tar
+
+# ATC EDITS
+# fkd: ${from_yaml:Tverti-wheeler/vertiencoder/conf/fkd_model.yaml, model}
+fkd: ${from_yaml:verti-wheeler_pipeline/Tverti-wheeler/vertiencoder/conf/fkd_model.yaml, model}
+
+# ATC EDITS
+# fkd_weight: /home/aniket/Token_prediction/Deployment/Tverti-wheeler/vertiencoder/checkpoint/last_hopes/only_ctx/dt14-tal32-fkd-PL1-finetuned-09-13-21-46-E50.tar
+fkd_weight: verti-wheeler_pipeline/Tverti-wheeler/vertiencoder/checkpoint/last_hopes/only_ctx/dt14-tal32-fkd-PL1-finetuned-09-13-21-46-E50.tar
+
+# ATC EDITS - ANIKET SAID TO REMOVE THE BC, IKD, SWAE MODELS
+# ikd: ${from_yaml:Tverti-wheeler/vertiencoder/conf/ikd_model.yaml, model}
+# ikd: ${from_yaml:verti-wheeler_pipeline/Tverti-wheeler/vertiencoder/conf/ikd_model.yaml, model}
+
+# NEED FROM ANIKET
+# ikd_weight: Tverti-wheeler/vertiencoder/checkpoint/dt-ikd-frozen/dt-best.tar
+
+
+# ALREADY COMMENTED OUT
+# compile: True
+# task: fkd
+# tverti: ${from_yaml:Tverti-wheeler/vertiencoder/conf/transformer.yaml, model}
+# tverti_weight: Tverti-wheeler/vertiencoder/checkpoint/vertiencoder/vertiencoder-7-128D-09-10-13-11-E300.tar
+# bc: ${from_yaml:Tverti-wheeler/vertiencoder/conf/bc_model.yaml, model}
+# # bc_weight: Tverti-wheeler/vertiencoder/checkpoint/dt-bc-finetuned/dt-best.tar
+# bc_weight: Tverti-wheeler/vertiencoder/checkpoint/dt-bc-frozen/dt-best.tar
+# fkd: ${from_yaml:Tverti-wheeler/vertiencoder/conf/fkd_model.yaml, model}
+# fkd_weight: Tverti-wheeler/vertiencoder/checkpoint/dt-fkd-frozen/dt8-best.tar
+# ikd: ${from_yaml:Tverti-wheeler/vertiencoder/conf/ikd_model.yaml, model}
+# ikd_weight: Tverti-wheeler/vertiencoder/checkpoint/dt-ikd-frozen/dt-best.tar
