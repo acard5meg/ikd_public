@@ -39,9 +39,11 @@ import torch.nn as nn
 
 # FOR GRAPH/PATH PLANNING
 from collections import deque
-from dijkstra_planner import dij_planner
-from a_star_heur1 import a_star1_planner
-from a_star_heur2 import a_star2_planner
+# from dijkstra_planner import dij_planner
+# from a_star_heur1 import a_star1_planner
+# from a_star_heur2 import a_star2_planner
+# from edge_weight import edge_weight_calculation
+from ikd_utils import total_path_planner, edge_weight_calculation
 
 # THIS GIVES WARNING ABOUT DISTUTILS BEING INSTALLED BEFORE SETUPTOOLS
 # CURRENTLY GIVES WARNING BUT CAUTIONS MAY CAUSE ERROR/DISTUTILS IS DEPRACATED
@@ -241,7 +243,7 @@ class Deployment_Tverti():
         # the list is then cleared
         self.is_planning = True
 
-        print("STARTING PATH PLAN")
+        # print("STARTING PATH PLAN")
         
         curr_pose = self.robot_pose.copy()
 
@@ -251,13 +253,16 @@ class Deployment_Tverti():
         
         # Used to normalize the edge weights if using A* with the Euclidean distance
         # as the heuristic
-        # Also checking elevation because the value of the wheel difference is small
-        # so I don't believe we need to normalize for the A* heuristic
-        if not normalize or elevation:
-            normalizing_weight = 1
-        else:
-            normalizing_weight = torch.sum(torch.tensor(self.mp.get_trav_footprint(curr_pose, (40,40)),\
-                                        dtype=torch.float32).cuda().unsqueeze(0))
+
+        # Calculating normalizing values
+        start_t = torch.tensor(self.mp.get_trav_footprint(curr_pose, (40,40)),\
+                                        dtype=torch.float32).cuda().unsqueeze(0)
+        
+        start_e = torch.tensor(self.mp.get_elev_footprint(curr_pose, (40,40)),\
+                                        dtype=torch.float32).cuda().unsqueeze(0)
+        
+        normalize_t = edge_weight_calculation(start_t, start_e, True, 0, 0, False)
+        normalize_e = edge_weight_calculation(start_t, start_e, False, 0, 0, False)
 
         # if want 1 step dictionary has 1 key (curr_pose) with 11 values (possible poses)
         # if want 2 steps dictionary needs 12 keys -> the current pose, and the 11 
@@ -291,23 +296,14 @@ class Deployment_Tverti():
                 poses.append(tuple(new_pose))
                 
                 # Constructing the edge weight based on whether we use the elevation map
-                if not elevation:
-                    edge_weight = torch.sum(torch.tensor(self.mp.get_trav_footprint(new_pose, (40,40)),\
-                                            dtype=torch.float32).cuda().unsqueeze(0))
-                else:                    
-                    elev_map = torch.tensor(self.mp.get_elev_footprint(new_pose, (40,40)),\
+                trav_map = torch.tensor(self.mp.get_trav_footprint(new_pose, (40,40)),\
                                             dtype=torch.float32).cuda().unsqueeze(0)
-                    
-                    back_l = torch.mean(elev_map[ : , : 4, : 4]).item()
-                    back_r = torch.mean(elev_map[ : , : 4, elev_map.shape[2]-4 : ]).item()
-                    front_l = torch.mean(elev_map[ : , elev_map.shape[2]-4 : , : 4]).item()
-                    front_r = torch.mean(elev_map[ : , elev_map.shape[2]-4 : , elev_map.shape[2] - 4 : ]).item()
-
-                    edge_weight = abs(back_l - back_r) + abs(front_l - front_r) + abs(front_l - back_l) + abs(front_r + back_r)
+                elev_map = torch.tensor(self.mp.get_elev_footprint(new_pose, (40,40)),\
+                                            dtype=torch.float32).cuda().unsqueeze(0)
                 
-                edge_weight /= normalizing_weight
+                edge_weight = edge_weight_calculation(trav_map, elev_map, elevation, normalize_t, normalize_e, normalize)
 
-                weight_dict[tuple(build_pose)].update({tuple(new_pose) : edge_weight.item()})
+                weight_dict[tuple(build_pose)].update({tuple(new_pose) : edge_weight})
 
                 if ((new_pose[0]-final_x)**2 + (new_pose[1]-final_y)**2)**(1/2) < closest_dist:
                     closest_pose = new_pose.copy()
@@ -315,7 +311,8 @@ class Deployment_Tverti():
         weight_dict['start'] = tuple(curr_pose)
         weight_dict['end'] = tuple(closest_pose)
 
-        print("ENDING PATH PLAN")
+        # print("ENDING PATH PLAN")
+
         if len(self.map_hold) > 0:
             self.mp.update_map(self.map_hold[-1])
             self.map_hold.clear()
@@ -334,7 +331,7 @@ class Deployment_Tverti():
 
         steps, final_x, final_y, elevation: same definition as those given in build_graph function above
 
-        Returns list of lists for paths
+        Returns list of lists for paths with each list elem being [x, y, yaw]
 
         Total runtime for 100,000 iterations at different number of steps edge weight is sum traversibility map
 
@@ -350,9 +347,8 @@ class Deployment_Tverti():
         DIJ time:  1464.0915904045105
         A* unnormalize:  1660.4615585803986
         A* normalize:  1582.9033591747284
-        5 steps
-        DIJ time:  23290.10035252571
-        A* unnormalize:  22398.738894701004
+
+        At 5 steps, the A* unnormalize is slightly faster than Dijkstra. Didn't run A* normalize
         """
 
         if planner == 2:
@@ -360,15 +356,10 @@ class Deployment_Tverti():
         else:
             normalize = False
 
-        weight_dict = self.build_graph(planner, steps , final_x, final_y, normalize, elevation)
+        weight_dict = self.build_graph(steps , final_x, final_y, normalize, elevation)
 
-        if planner == 1:
-            return dij_planner(weight_dict)
-        elif planner == 2:
-            return a_star1_planner(weight_dict)
-        else:
-            return a_star2_planner(weight_dict)
-        
+
+        return total_path_planner(weight_dict, planner)
 
     def initialize_stack(self):
         if self.prev_robot_pose_m is None:
@@ -422,13 +413,13 @@ class Deployment_Tverti():
             return
         if len(self.gt_cmds) == 0:
             
-            print("waiting for ground truth commands")
+            # print("waiting for ground truth commands")
 
             self.gt_cmds = []
             return 
         if len(self.gt_path) == 0:
 
-            print("waiting fror ground truth path")
+            # print("waiting fror ground truth path")
 
             self.pred_path_a = [self.robot_pose]
             self.pred_path_m = [self.robot_pose]
@@ -451,6 +442,7 @@ class Deployment_Tverti():
         pred_pose_m = self.model_predict()
 
         ### running the path planner and print the path in SE2
+
         pred_x_t1 = self.path_planner()
         print(pred_x_t1)
 

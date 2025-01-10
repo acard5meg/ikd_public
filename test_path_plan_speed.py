@@ -2,13 +2,15 @@
 
 import pickle
 import time
+import os
 
 from dijkstra_planner import dij_planner
 from a_star_heur1 import a_star1_planner
 from a_star_heur2 import a_star2_planner
 
 def unpickler(filename, num):
-    with open(f"{filename}{num}.pkl", 'rb') as p:
+    file_path = "/home/rog/Desktop/ikd_test_graphs/"
+    with open(f"{file_path}{filename}{num}.pkl", 'rb') as p:
         return pickle.load(p)
     
 def normal_pkl(num):
@@ -26,6 +28,11 @@ def test_paths():
     n3 = normal_pkl(3)
     n4 = normal_pkl(4)
     n5 = normal_pkl(5)
+
+    print(dij_planner(n5))
+    print(a_star1_planner(n5))
+    print(dij_planner(un5))
+    print(a_star2_planner(un5))
 
     # start_dij2 = time.time()
     # for _ in range(10000):
@@ -47,10 +54,10 @@ def test_paths():
     # print("A* unnormalize: ", func_time(a_star2_planner,un4))
     # print("A* normalize: ", func_time(a_star1_planner,n4))
 
-    print("5")
-    print("DIJ time: ", func_time(dij_planner, un5))
-    print("A* unnormalize: ", func_time(a_star2_planner,un5))
-    print("A* normalize: ", func_time(a_star1_planner,n5))
+    # print("5")
+    # print("DIJ time: ", func_time(dij_planner, un5))
+    # print("A* unnormalize: ", func_time(a_star2_planner,un5))
+    # print("A* normalize: ", func_time(a_star1_planner,n5))
 
     # print(dij_planner(un3))
     # print(dij_planner(un4))

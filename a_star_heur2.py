@@ -42,7 +42,7 @@ def a_star_map(map):
 
         for v in map[key]:
             if v not in g_score:
-                f_score[key] = float('inf')
+                f_score[v] = float('inf')
                 g_score[v] = float('inf')
                 prev[v] = -1
 
