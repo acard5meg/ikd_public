@@ -1,0 +1,11 @@
+README.md
+setup.py
+vertiencoder/__init__.py
+vertiencoder/train_dt.py
+vertiencoder/train_next_swae.py
+vertiencoder/train_pretext.py
+vertiencoder/train_swae.py
+vertiencoder.egg-info/PKG-INFO
+vertiencoder.egg-info/SOURCES.txt
+vertiencoder.egg-info/dependency_links.txt
+vertiencoder.egg-info/top_level.txt
